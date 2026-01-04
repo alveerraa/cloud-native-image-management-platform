@@ -3,7 +3,7 @@
  * Handles image upload and gallery display
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -18,15 +18,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Fetch images on component mount
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
   /**
    * Fetch all uploaded images from backend
    */
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/images`);
@@ -37,7 +32,12 @@ function App() {
       showMessage('Failed to load images', 'error');
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch images on component mount
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
 
   /**
    * Handle file selection
@@ -82,7 +82,7 @@ function App() {
 
     try {
       setUploading(true);
-      const response = await axios.post(`${API_URL}/api/upload`, formData, {
+      await axios.post(`${API_URL}/api/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
