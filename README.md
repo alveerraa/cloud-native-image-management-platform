@@ -44,6 +44,8 @@
 
 This platform enables users to upload images through a responsive web interface, store them securely in AWS S3, and view them in a dynamic gallery. The project showcases professional-grade cloud architecture and DevOps practices suitable for demonstrating skills to potential employers.
 
+<img width="1414" height="887" alt="Screenshot 2026-01-05 at 3 31 21 AM" src="https://github.com/user-attachments/assets/c3b2dfea-e143-4d11-9b37-35cbc82b54d9" />
+
 **Perfect for:**
 - Cloud Engineering portfolios
 - DevOps demonstrations
