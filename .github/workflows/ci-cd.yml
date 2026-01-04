@@ -23,11 +23,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-        node-version: '18'
+          node-version: '18'
 
       - name: Install dependencies
         working-directory: ./backend
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         working-directory: ./backend
@@ -62,12 +62,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         working-directory: ./frontend
@@ -203,16 +201,14 @@ jobs:
       - name: Check backend code quality
         working-directory: ./backend
         run: |
-          npm ci
+          npm install
           echo "✅ Backend dependencies installed successfully"
-          # Add linting here if configured: npm run lint
 
       - name: Check frontend code quality
         working-directory: ./frontend
         run: |
-          npm ci
+          npm install
           echo "✅ Frontend dependencies installed successfully"
-          # Add linting here if configured: npm run lint
 
   # Job 6: Build and Push Docker Images (on main branch only)
   docker-publish:
@@ -280,7 +276,7 @@ jobs:
           echo "Backend Image: ${{ steps.meta-backend.outputs.tags }}"
           echo "Frontend Image: ${{ steps.meta-frontend.outputs.tags }}"
 
-  # Job 7: Deploy (Simulated - adapt for your deployment target)
+  # Job 7: Deploy (Simulated)
   deploy:
     name: Deploy Application
     runs-on: ubuntu-latest
@@ -315,46 +311,12 @@ jobs:
           echo "  4. Azure Container Instances"
           echo "  5. Google Cloud Run"
           echo ""
-          echo "💡 To enable real deployment:"
-          echo "  - Add deployment credentials to GitHub Secrets"
-          echo "  - Configure your target platform"
-          echo "  - Uncomment deployment steps below"
-          echo ""
           echo "=========================================="
-
-      # Example AWS ECS Deployment (commented out)
-      # - name: Deploy to AWS ECS
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: us-east-1
-      #   run: |
-      #     aws ecs update-service --cluster your-cluster --service backend-service --force-new-deployment
-      #     aws ecs update-service --cluster your-cluster --service frontend-service --force-new-deployment
-
-      # Example SSH Deployment to EC2 (commented out)
-      # - name: Deploy to EC2
-      #   uses: appleboy/ssh-action@master
-      #   with:
-      #     host: ${{ secrets.EC2_HOST }}
-      #     username: ${{ secrets.EC2_USERNAME }}
-      #     key: ${{ secrets.EC2_SSH_KEY }}
-      #     script: |
-      #       cd /app/Cloud-DevOps-Image-Platform
-      #       git pull origin main
-      #       docker-compose down
-      #       docker-compose pull
-      #       docker-compose up -d
 
       - name: Deployment Success
         run: |
           echo "✅ Deployment workflow completed"
           echo "📊 Check Actions tab for detailed logs"
-          echo "🔗 Access your application at your configured domain"
-
-      - name: Create deployment notification
-        run: |
-          echo "::notice title=Deployment Status::Successfully deployed to production environment"
 
   # Job 8: Notify on Success
   notify-success:
