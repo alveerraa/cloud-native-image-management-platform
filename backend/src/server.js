@@ -12,7 +12,12 @@ const uploadRoutes = require('./routes/upload');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+
+/**
+ * IMPORTANT CHANGE:
+ * We moved from 5000 → 5001 to avoid port conflicts
+ */
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
@@ -29,10 +34,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint for Docker and load balancers
+// Health check endpoint (used by Docker)
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
+  res.status(200).json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'image-platform-backend'
   });
@@ -43,7 +48,7 @@ app.use('/api', uploadRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Cloud Image Platform API',
     version: '1.0.0',
     endpoints: {
