@@ -6,25 +6,26 @@ on:
   pull_request:
     branches: [ main ]
 
-# 🔑 REQUIRED for GHCR PUSH
+# 🔑 REQUIRED for GitHub Container Registry (GHCR)
 permissions:
   contents: read
   packages: write
 
 env:
-  DOCKER_REGISTRY: ghcr.io
-  IMAGE_PREFIX: alveerraa/cloud-native-image-management-platform
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: alveerraa
+  PROJECT_NAME: cloud-native-image-management-platform
 
+# =========================
+# JOB 1: BACKEND BUILD
+# =========================
 jobs:
-  # =========================
-  # Job 1: Backend Build
-  # =========================
   backend-build:
     name: Build Backend
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -36,19 +37,19 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-      - name: Build Backend Docker image
+      - name: Build backend Docker image
         working-directory: ./backend
         run: docker build -t backend:${{ github.sha }} .
 
-  # =========================
-  # Job 2: Frontend Build
-  # =========================
+# =========================
+# JOB 2: FRONTEND BUILD
+# =========================
   frontend-build:
     name: Build Frontend
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -60,24 +61,24 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
-      - name: Build frontend app
+      - name: Build frontend application
         working-directory: ./frontend
         run: npm run build
 
-      - name: Build Frontend Docker image
+      - name: Build frontend Docker image
         working-directory: ./frontend
         run: docker build -t frontend:${{ github.sha }} .
 
-  # =========================
-  # Job 3: Security Scan
-  # =========================
+# =========================
+# JOB 3: SECURITY SCAN
+# =========================
   security-scan:
-    name: Security Scan
+    name: Security Scan (Trivy)
     runs-on: ubuntu-latest
     needs: [backend-build, frontend-build]
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Trivy scan - Backend
@@ -94,69 +95,71 @@ jobs:
           scan-ref: ./frontend
           severity: CRITICAL,HIGH
 
-  # =========================
-  # Job 4: Code Quality
-  # =========================
+# =========================
+# JOB 4: CODE QUALITY
+# =========================
   code-quality:
-    name: Code Quality
+    name: Code Quality Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Backend deps check
+      - name: Backend dependency validation
         working-directory: ./backend
         run: npm install
 
-      - name: Frontend deps check
+      - name: Frontend dependency validation
         working-directory: ./frontend
         run: npm install
 
-  # =========================
-  # Job 5: Publish Docker Images
-  # =========================
+# =========================
+# JOB 5: PUBLISH DOCKER IMAGES
+# =========================
   docker-publish:
-    name: Publish Docker Images
+    name: Publish Docker Images to GHCR
     runs-on: ubuntu-latest
-    needs: [backend-build, frontend-build, security-scan, integration-test, code-quality]
+    needs: [backend-build, frontend-build, security-scan, code-quality]
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GHCR
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ---------- Backend Image ----------
+      # ---------- BACKEND IMAGE ----------
       - name: Build & Push Backend Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/alveerraa/cloud-native-image-management-platform-backend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-backend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-backend:${{ github.sha }}
 
-      # ---------- Frontend Image ----------
+      # ---------- FRONTEND IMAGE ----------
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
           tags: |
-            ghcr.io/alveerraa/cloud-native-image-management-platform-frontend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-frontend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-frontend:${{ github.sha }}
 
-  # =========================
-  # Job 6: Deploy (Simulated)
-  # =========================
+# =========================
+# JOB 6: DEPLOY (SIMULATED)
+# =========================
   deploy:
     name: Deploy (Simulation)
     runs-on: ubuntu-latest
@@ -166,6 +169,19 @@ jobs:
     steps:
       - name: Deployment Summary
         run: |
-          echo "🚀 Deployment Successful"
-          echo "Backend Image: ghcr.io/alveerraa/cloud-native-image-management-platform-backend:latest"
-          echo "Frontend Image: ghcr.io/alveerraa/cloud-native-image-management-platform-frontend:latest"
+          echo "======================================"
+          echo "🚀 DEPLOYMENT SIMULATION SUCCESSFUL"
+          echo "======================================"
+          echo ""
+          echo "Backend Image:"
+          echo "  ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-backend:latest"
+          echo ""
+          echo "Frontend Image:"
+          echo "  ghcr.io/${{ env.IMAGE_OWNER }}/${{ env.PROJECT_NAME }}-frontend:latest"
+          echo ""
+          echo "Deployment Targets:"
+          echo "  • AWS ECS"
+          echo "  • AWS EC2 + Docker"
+          echo "  • Kubernetes (EKS)"
+          echo "  • Cloud Run"
+          echo "======================================"
